@@ -1,5 +1,4 @@
 @echo off
 TITLE Prospi Back
-
-npm test
+start /min "" cmd /c npm test
 exit
