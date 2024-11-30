@@ -4,7 +4,8 @@
   "description": "Sistema de administracion de negocio",
   "main": "server.js",
   "scripts": {
-    "test": "nodemon server.js"
+    "test": "nodemon server.js",
+    "start": "node server.js"
   },
   "author": "Jonathan Ricardo Arias Cruz",
   "license": "ISC",
@@ -12,6 +13,7 @@
     "cors": "^2.8.5",
     "express": "^4.21.1",
     "mongoose": "^8.8.2",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "nodemon": "^3.1.7"
   }
 }
