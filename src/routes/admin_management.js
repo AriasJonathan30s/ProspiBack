@@ -73,7 +73,7 @@ router.get('/load-users',(req,res)=>{
         //Requerira validacion headers token admin mas adelante.
         admnServ.getUsers()
         .then(resp=>{
-            res.json({ message: resp });
+            res.setHeader('Access-Control-Allow-Origin','*').json({ message: resp });
         })
         .catch(e=>{
             if (typeof(e) === 'number') {
