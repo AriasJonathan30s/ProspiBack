@@ -1,7 +1,143 @@
+const consts = require('../helpers/consts');
+const builder = require('../helpers/builder');
+
+const business = require('../DTO/businessDTO');
+
 const security = require('../fetcher/secureFetch');
 const dao = require('../DAO/dao');
 
 module.exports = {
+    editBusiness: (token, editBsns)=>{
+        return new Promise((resolve, reject) => {
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje)
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 })
+                    if (hasAccess) {
+                        const bsns = JSON.parse(editBsns);
+                        const id = bsns.id;
+                        delete bsns.id
+                        if (bsns.scheduleDaysStart) bsns.scheduleDaysStart = consts.week[builder.weekDayGetter(bsns.scheduleDaysStart)];
+                        if (bsns.scheduleDaysEnd) bsns.scheduleDaysEnd = consts.week[builder.weekDayGetter(bsns.scheduleDaysEnd)];
+                        if (bsns.scheduleHoursStart) bsns.scheduleHoursStart = builder.timeFormater(bsns.scheduleHoursStart);
+                        if (bsns.scheduleHoursEnd) bsns.scheduleHoursEnd = builder.timeFormater(bsns.scheduleHoursEnd);
+                        dao.updateBsnsById(id, bsns)
+                        .then(resp=>{
+                            if (resp) {
+                                resolve(1);    
+                            } else {
+                                reject(0)
+                            }
+                        })
+                        .catch(e=>{
+                            console.warn('Update business request error');
+                            reject(e);
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    console.warn('Decode token response error '+ resp);
+                    reject(resp);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e)
+            })
+
+        })
+    },
+    loadBusiness: (token)=>{
+        return new Promise((resolve, reject) => {
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje)
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 })
+                    if (hasAccess) {
+                        dao.getBsnesses()
+                        .then(resp=>{
+                            if (resp) {
+                                resolve(resp[0]);
+                            } else {
+                                reject(0);
+                            }
+                        })
+                        .catch(e=>{
+                            console.warn('Get businesses request error');
+                            reject(e);
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    console.warn('Decode token response error '+ resp);
+                    reject(resp);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e)
+            })
+
+        })
+    },
+    registerBusiness: (token, profile)=>{
+        return new Promise((resolve, reject) => {
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje)
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 })
+                    if (hasAccess) {
+                        dao.getBsnesses({},{})
+                        .then(resp=>{
+                            if (!resp.length) {
+                                const bsPrfl= new business();
+                                bsPrfl.business(JSON.parse(profile));
+                                bsPrfl.setScheduleDaysStart(consts.week[builder.weekDayGetter(bsPrfl.getScheduleDaysStart())]);
+                                bsPrfl.setScheduleDaysEnd(consts.week[builder.weekDayGetter(bsPrfl.getScheduleDaysEnd())]);
+                                bsPrfl.setScheduleHoursStart(builder.timeFormater(bsPrfl.getScheduleHoursStart()));
+                                bsPrfl.setScheduleHoursEnd(builder.timeFormater(bsPrfl.getScheduleHoursEnd()));
+                                dao.regBsnss(bsPrfl.getBusiness())
+                                .then(resp=>{
+                                    console.log(resp)
+                                    resolve(0);
+                                })
+                                .catch(e=>{
+                                    console.warn('New business request error');
+                                    reject(e);
+                                })
+                            } else {
+                                reject(5);
+                            }
+                        })
+                        .catch(e=>{
+                            console.warn('Get businesses request error');
+                            reject(e);
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    console.warn('Decode token response error '+ resp);
+                    reject(resp);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e)
+            })
+        });
+    },
     eraseUser: (userId)=>{
         return new Promise((resolve, reject) => {
             dao.genObjId(userId)

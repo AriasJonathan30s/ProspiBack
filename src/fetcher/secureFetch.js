@@ -2,6 +2,22 @@ const fetch = require('node-fetch')
 const consts = require('../helpers/consts');
 
 module.exports = {
+    decodeToken: async (tkn)=>{
+        try {
+            return await fetch (`${ consts.prot }://${ consts.url }:${ consts.security }/decrypt/token`,
+                {
+                    method:'get',
+                    headers:
+                    { 
+                        'Content-Type': 'application/json',
+                        'tkn': tkn
+                    }
+                })
+        } catch (e) {
+            console.warn('Decode token Fetch error');
+            return 0;
+        }
+    },
     genToken: async (tkn, acc)=>{
         try {
             return await fetch (`${ consts.prot }://${ consts.url }:${ consts.security }/encrypt/token`,
@@ -15,7 +31,7 @@ module.exports = {
                 }
             })    
         } catch (e) {
-            console.warn('Encrypt new user Fetch error');
+            console.warn('Encode token Fetch error');
             return 0;
         }
     },
