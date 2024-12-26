@@ -1,16 +1,55 @@
 const express = require('express');
 const consts = require('../helpers/consts');
-const admnServ = require('../services/admnSrv');
+const production = require('../services/prodcnSrv');
 
 const router = express.Router();
 
-router.get('/edit-business',(req,res)=>{
+router.get('/get-menu', (req,res)=>{
     const headers = req.headers;
     try {
-        if (headers.access && headers.bsns) {
-            admnServ.editBusiness(headers.access, headers.bsns)
+        if (headers.access && headers.id && headers.prod && headers.dtl) {
+            production.getProducts(headers.access)
             .then(resp=>{
-                res.json({message: consts.succsMssgs[resp]})
+                production.getMenu(resp)
+                .then(resp=>{
+                    console.log(resp)
+                    res.json({ message: 'Construyendo' })
+                })
+                .catch(e=>{
+                    throw e;
+                })
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+        
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
+
+router.get('/edit-product', (req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.id && headers.prod && headers.dtl) {
+            production.editProduct(headers.access, headers.id, headers.prod, headers.dtl, headers.addltps)
+            .then(resp=>{
+                res.json({ message: consts.succsMssgs[resp] });
             })
             .catch(e=>{
                 if (typeof(e) === 'number') {
@@ -35,13 +74,13 @@ router.get('/edit-business',(req,res)=>{
     }
 })
 
-router.get('/load-business',(req,res)=>{
+router.get('/get-products', (req,res)=>{
     const headers = req.headers;
     try {
         if (headers.access) {
-            admnServ.loadBusiness(headers.access)
+            production.getProducts(headers.access)
             .then(resp=>{
-                res.json({message: resp})
+                res.json({ message: resp })
             })
             .catch(e=>{
                 if (typeof(e) === 'number') {
@@ -66,13 +105,13 @@ router.get('/load-business',(req,res)=>{
     }
 })
 
-router.get('/new-business',(req,res)=>{
+router.get('/new-product', (req,res)=>{
     const headers = req.headers;
     try {
-        if (headers.access && headers.profile) {
-            admnServ.registerBusiness(headers.access, headers.profile)
+        if (headers.access && headers.prod) {
+            production.newProduct(headers.access, headers.prod)
             .then(resp=>{
-                res.json({message: consts.succsMssgs[resp]})
+                res.json({ message: consts.succsMssgs[resp] });
             })
             .catch(e=>{
                 if (typeof(e) === 'number') {
@@ -97,13 +136,13 @@ router.get('/new-business',(req,res)=>{
     }
 })
 
-router.get('/erase-user',(req,res)=>{
+router.get('/edit-condiment', (req,res)=>{
     const headers = req.headers;
     try {
-        if (headers.id) {
-            admnServ.eraseUser(headers.id)
+        if (headers.access && headers.condm && headers.id) {
+            production.editCondiment(headers.access, headers.condm, headers.id)
             .then(resp=>{
-                res.json({message: consts.succsMssgs[resp]})
+                res.json({ message: consts.succsMssgs[resp] });
             })
             .catch(e=>{
                 if (typeof(e) === 'number') {
@@ -128,14 +167,44 @@ router.get('/erase-user',(req,res)=>{
     }
 })
 
-router.get('/edit-user',(req,res)=>{
+router.get('/get-condiments', (req,res)=>{
     const headers = req.headers;
     try {
-        if (headers.euser && headers.id) {
-            const editUser = JSON.parse(headers.euser);
-            admnServ.editUser(headers.id, editUser)
+        if (headers.access) {
+            production.getCondiments(headers.access)
             .then(resp=>{
-                res.json({message: consts.succsMssgs[resp]});
+                res.json({ message: resp })
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+    } else {
+        console.warn('Parametro erroneo');
+        res.status(500).json({ message: consts.errMssgs[1] });
+    }
+} catch (e) {
+    console.warn(e);
+    res.status(500).json({ message: consts.errMssgs[0] });
+}
+})
+
+router.get('/new-condiment',(req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.condm) {
+            production.newCondiment(headers.access, headers.condm)
+            .then(resp=>{
+                res.json({ message: consts.succsMssgs[resp] })
             })
             .catch(e=>{
                 if (typeof(e) === 'number') {
@@ -156,102 +225,6 @@ router.get('/edit-user',(req,res)=>{
         }
     } catch (e) {
         console.warn(e);
-        res.status(500).json({ message: consts.errMssgs[0] });
-    }
-})
-
-router.get('/load-users',(req,res)=>{
-    const headers = req.headers;
-    try {
-        //Requerira validacion headers token admin mas adelante.
-        admnServ.getUsers()
-        .then(resp=>{
-            res.setHeader('Access-Control-Allow-Origin','*').json({ message: resp });
-        })
-        .catch(e=>{
-            if (typeof(e) === 'number') {
-                console.warn(consts.errMssgs[e]);
-                if (e >= 1) {
-                    res.status(501).json({ message: consts.errMssgs[e] });
-                } else {
-                    res.status(500).json({ message: consts.errMssgs[e] });
-                }
-            } else {
-                console.warn(e);
-                res.status(500).json({ message: consts.errMssgs[0] });
-            }
-        })
-    } catch (e) {
-        console.warn(e);
-        res.status(500).json({ message: consts.errMssgs[0] });
-    }
-})
-
-router.get('/new-user',(req,res)=>{
-    const headers = req.headers;
-    try {
-        if (headers.nuser) {
-            const newUser = JSON.parse(headers.nuser);
-            if (newUser.user && newUser.name && newUser.pass && newUser.lastName && newUser.address && newUser.birthDate && newUser.turn
-                && newUser.initDate && newUser.role && newUser.ine) {
-                
-                admnServ.registerUser(newUser)
-                .then(resp=>{
-                    res.json({message:consts.succsMssgs[resp]});
-                })
-                .catch(e=>{
-                    if (typeof(e) === 'number') {
-                        console.warn(consts.errMssgs[e]);
-                        if (e >= 1) {
-                            res.status(501).json({ message: consts.errMssgs[e] });
-                        } else {
-                            res.status(500).json({ message: consts.errMssgs[e] });
-                        }
-                    } else {
-                        console.warn(e);
-                        res.status(500).json({ message: consts.errMssgs[0] });
-                    }
-                })
-            } else {
-                console.warn('Parametros erroneos');
-                res.status(500).json({ message: consts.errMssgs[1] });
-            }
-        } else {
-            console.warn('Parametro erroneo');
-            res.status(500).json({ message: consts.errMssgs[1] });
-        }
-    } catch (e) {
-        console.warn(e);
-        res.status(500).json({ message: consts.errMssgs[0] });
-    }
-})
-
-router.get('/login',(req,res)=>{
-    const headers = req.headers;
-    try {
-        if (headers.user) {
-            admnServ.login(headers.user)
-            .then(resp=>{
-                res.json({ message:'Bienvenido', token: resp });
-            })
-            .catch(e=>{
-                if (typeof(e) === 'number') {
-                    console.warn(consts.errMssgs[e]);
-                    if (e >= 1) {
-                        res.status(501).json({ message: consts.errMssgs[e] });
-                    } else {
-                        res.status(500).json({ message: consts.errMssgs[e] });
-                    }
-                } else {
-                    console.warn(e);
-                    res.status(500).json({ message: consts.errMssgs[0] });
-                }
-            })
-        } else {
-            console.warn('Parametro erroneo');
-            res.status(500).json({ message: consts.errMssgs[1] });
-        }
-    } catch (error) {
         res.status(500).json({ message: consts.errMssgs[0] });
     }
 })

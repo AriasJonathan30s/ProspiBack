@@ -1,6 +1,6 @@
 module.exports = {
     prot: 'http',
-    url: '192.168.0.100',
+    url: '192.168.1.100',
     // url: 'localhost',
     security: process.env.SISECURL || 3002,
     admnKey: 'AuthPersonel',

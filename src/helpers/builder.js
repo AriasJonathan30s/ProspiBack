@@ -1,4 +1,9 @@
 module.exports = {
+    extractNames: (object)=>{
+        return object.map(extract=>{
+            return extract.name
+        })
+    },
     timeFormater: (time)=>{
         const timeArr = time.split(':');
         const timeFrame = ['AM', 'PM'];
@@ -13,7 +18,6 @@ module.exports = {
     weekDayGetter: (date)=>{
         const weekDay = new Date(date);
         return weekDay.getDay();
-
     },
     dateGetter: (date)=>{
         return new Date(date);

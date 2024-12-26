@@ -2,9 +2,96 @@ const builder = require('../models/mongoosebuilder');
 
 const users = require('../models/prospiUsers');
 const business = require('../models/prospiBusiness');
-
+const condiments = require('../models/prospiCondiments');
+const products = require('../models/prospiProducts');
 
 module.exports = {
+    updateProdByID: (id, prod)=>{
+        return new Promise((resolve, reject) => {
+            products.findByIdAndUpdate(id,prod)
+            .then(found=>{
+                resolve(found);
+            })
+            .catch(e=>{
+                console.warn('Update product by Id Query error ' + e);
+                reject(e);
+            })
+        })
+    },
+    findProdByID: (id)=>{
+        return new Promise((resolve, reject) => {
+            products.findById(id)
+            .then(found=>{
+                resolve(found);
+            })
+            .catch(e=>{
+                console.warn('Get products Query error ' + e);
+                reject(e);
+            })
+        })
+    },
+    getProducts: (params, opts)=>{
+        return new Promise((resolve, reject) => {
+            products.find(params, opts)
+            .then(found=>{
+                resolve(found);
+            })
+            .catch(e=>{
+                console.warn('Get products Query error ' + e);
+                reject(e);
+            })
+        })
+    },
+    newProduct: (product)=>{
+        return new Promise((resolve, reject) => {
+            const newProduct = products(product);
+            newProduct.save()
+            .then(saved=>{
+                resolve(saved);
+            })
+            .catch(e=>{
+                console.warn('New product Query error ' + e);
+                reject(0);
+            })
+        })
+    },
+    updateCondById: (id, params)=>{
+        return new Promise((resolve, reject) => {
+            condiments.findByIdAndUpdate(id,params)
+            .then(found=>{
+                resolve(found);
+            })
+            .catch(e=>{
+                console.warn('Update condiment by Id Query error ' + e);
+                reject(e);
+            })
+        })
+    },
+    getCondiments: (params, opts)=>{
+        return new Promise((resolve, reject) => {
+            condiments.find(params,opts)
+            .then(found=>{
+                resolve(found);
+            })
+            .catch(e=>{
+                console.warn('Get condiments Query error ' + e);
+                reject(e);
+            })
+        })
+    },
+    newCondiment: (condiment)=>{
+        return new Promise((resolve, reject) => {
+            const newCondiment = condiments(condiment);
+            newCondiment.save()
+            .then(saved=>{
+                resolve(saved);
+            })
+            .catch(e=>{
+                console.warn('New condiment Query error ' + e);
+                reject(0);
+            })
+        })
+    },
     updateBsnsById: (id, params)=>{
         return new Promise((resolve, reject) => {
             business.findByIdAndUpdate(id, params)
@@ -54,7 +141,6 @@ module.exports = {
             })
         })
     },
-    
     updateUserById: (id,vals)=>{
         return new Promise((resolve, reject) => {
             users.findByIdAndUpdate(id,vals)
@@ -114,5 +200,5 @@ module.exports = {
                 reject(e)
             })
         }) 
-    },
+    }
 }
