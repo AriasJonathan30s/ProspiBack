@@ -237,7 +237,7 @@ router.get('/login',(req,res)=>{
             .catch(e=>{
                 if (typeof(e) === 'number') {
                     console.warn(consts.errMssgs[e]);
-                    if (e >= 1) {
+                    if (e >= 0) {
                         res.status(501).json({ message: consts.errMssgs[e] });
                     } else {
                         res.status(500).json({ message: consts.errMssgs[e] });

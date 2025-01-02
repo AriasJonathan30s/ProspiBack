@@ -4,8 +4,34 @@ const users = require('../models/prospiUsers');
 const business = require('../models/prospiBusiness');
 const condiments = require('../models/prospiCondiments');
 const products = require('../models/prospiProducts');
+const orders = require('../models/prospiOrders');
 
 module.exports = {
+    getOrders: (params,opts)=>{
+        return new Promise((resolve, reject) => {
+            orders.find(params, opts)
+            .then(found=>{
+                resolve(found);
+            })
+            .catch(e=>{
+                console.warn('Get orders Query error ' + e);
+                reject(e);
+            })
+        })
+    },
+    regNewOrder: (order)=>{
+        return new Promise((resolve, reject) => {
+            const newOrder = orders(order);
+            newOrder.save()
+            .then(saved=>{
+                resolve(saved);
+            })
+            .catch(e=>{
+                console.warn('New order Query error ' + e);
+                reject(0);
+            })
+        })
+    },
     updateProdByID: (id, prod)=>{
         return new Promise((resolve, reject) => {
             products.findByIdAndUpdate(id,prod)

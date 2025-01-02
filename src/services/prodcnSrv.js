@@ -4,12 +4,103 @@ const productFood = require('../DTO/productFoodDTO');
 
 const dao = require('../DAO/dao');
 const builder = require('../helpers/builder');
+const prospiOrders = require('../models/prospiOrders');
 
 module.exports = {
+    getOrders:(token, show, opts)=>{
+        return new Promise((resolve, reject)=>{
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje)
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 })
+                    if (hasAccess) {
+                        const showOrd = JSON.parse(show);
+                        const hideOpts = JSON.parse(opts);
+                        dao.getOrders(showOrd,hideOpts)
+                        .then(resp=>{
+                            const orders = [];
+                            resp.map(order=>{
+                                const requesDateHour = new Date(order.requesDateHour);
+                                const newOrder = { id: order._id, cxName: order.cxName, prodQuant: order.products.length, status: 1, requesDateHour: requesDateHour.toLocaleString() };
+                                orders.push(newOrder);
+                            })
+                            resolve(orders);
+                        })
+                        .catch(e=>{
+                            console.warn('Get orders request error '+e);
+                            reject(e)
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    const error = await resp.json()
+                    console.warn('Decode token response error '+ error.mensaje);
+                    reject(error.mensaje);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e)
+            })
+        })
+    },
+    newOrder:(token, order)=>{
+        return new Promise((resolve, reject)=>{
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje)
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 })
+                    if (hasAccess) {
+                        const newOrder = JSON.parse(order);
+                        newOrder.status = 1;
+                        const date = new Date();
+                        newOrder.requesDateHour = date.toString();
+                        dao.regNewOrder(newOrder)
+                        .then(resp=>{
+                            if (resp) {
+                                resolve(0);
+                            } else {
+                                console.warn('Reg new Order response error');
+                                reject(0);
+                            }
+                        })
+                        .catch(e=>{
+                            console.warn('Reg new Order request error '+ e);
+                            reject(0);
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    const error = await resp.json()
+                    console.warn('Decode token response error '+ error.mensaje);
+                    reject(error.mensaje);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e)
+            })
+        })
+    },
     getMenu:(products)=>{
-        return Promise((resolve, reject)=>{
-            console.log(products)
-            resolve(0)
+        return new Promise((resolve, reject)=>{
+            const menuProd = [];
+            products.map(product=>{
+                let buildProd;
+                for (const prod of product.types) {
+                    buildProd = { id: product._id.toString(), name: product.name, type: prod.name, detail: builder.detailToString(prod.detail) };
+                    menuProd.push(buildProd)
+                }
+            })
+            resolve(menuProd)
         })
     },
     editProduct:(token, id, product, detail, addlTypes)=>{
@@ -21,7 +112,7 @@ module.exports = {
                     const admin = JSON.parse(body.mensaje)
                     const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 })
                     if (hasAccess) {
-                        dao.findProdByID(id,{'$match':''})
+                        dao.findProdByID(id)
                         .then( async gotProd=>{
                             const dbProd = new productFood();
                             dbProd.setProduct(await gotProd);
@@ -50,6 +141,9 @@ module.exports = {
                                 if (reqDet.name) {
                                     types[reqProd.index].name = reqDet.name;
                                 }
+                                if (reqDet.price) {
+                                    types[reqProd.index].price = reqDet.price;
+                                }
                                 if (reqDet.detail.length) {
                                     types[reqProd.index].detail = reqDet.detail;
                                 }    
@@ -66,6 +160,46 @@ module.exports = {
                         .catch(e=>{
                             console.warn('Find by id product request error');
                             reject(e);
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    const error = await resp.json()
+                    console.warn('Decode token response error '+ error.mensaje);
+                    reject(error.mensaje);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e)
+            })
+        })
+    },
+    buildProduct:(params, prod)=>{
+        return new Promise((resolve, reject)=>{
+            const parseParams = JSON.parse(params);
+            const builtProd = builder.buildProd(parseParams.type, prod);
+            resolve(builtProd);
+        })
+    },
+    getProduct:(token, searchProd)=>{
+        return new Promise((resolve, reject)=>{
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje)
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 })
+                    if (hasAccess) {
+                        const product = JSON.parse(searchProd);
+                        dao.findProdByID(product.id)
+                        .then(resp=>{
+                            resolve(resp);
+                        })
+                        .catch(e=>{
+                            reject(0);
                         })
                     } else {
                         console.warn('Get users response error');

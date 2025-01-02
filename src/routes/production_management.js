@@ -4,16 +4,77 @@ const production = require('../services/prodcnSrv');
 
 const router = express.Router();
 
+router.get('/get-orders', (req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.show && headers.opts) {
+            production.getOrders(headers.access, headers.show, headers.opts)
+            .then(resp=>{
+                res.json({ message:  resp})
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
+
+router.get('/set-new-order', (req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.order) {
+            production.newOrder(headers.access, headers.order)
+            .then(resp=>{
+                res.json({ message: consts.succsMssgs[resp] })
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
+
 router.get('/get-menu', (req,res)=>{
     const headers = req.headers;
     try {
-        if (headers.access && headers.id && headers.prod && headers.dtl) {
+        if (headers.access) {
             production.getProducts(headers.access)
             .then(resp=>{
                 production.getMenu(resp)
                 .then(resp=>{
-                    console.log(resp)
-                    res.json({ message: 'Construyendo' })
+                    res.json({ message: resp })
                 })
                 .catch(e=>{
                     throw e;
@@ -36,7 +97,6 @@ router.get('/get-menu', (req,res)=>{
             console.warn('Parametro erroneo');
             res.status(500).json({ message: consts.errMssgs[1] });
         }
-        
     } catch (e) {
         console.warn(e);
         res.status(500).json({ message: consts.errMssgs[0] });
@@ -50,6 +110,70 @@ router.get('/edit-product', (req,res)=>{
             production.editProduct(headers.access, headers.id, headers.prod, headers.dtl, headers.addltps)
             .then(resp=>{
                 res.json({ message: consts.succsMssgs[resp] });
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
+
+router.get('/get-product-and-ingredients',(req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.prod) {
+            production.getProduct(headers.access, headers.prod)
+            .then(resp=>{
+                production.buildProduct(headers.prod, resp)
+                .then(resp=>{
+                    const builtProd = resp;
+                    production.getCondiments(headers.access)
+                    .then(resp=>{
+                        res.json({ message: { prod: builtProd, cond: resp } });
+                    })
+                    .catch(e=>{
+                        if (typeof(e) === 'number') {
+                            console.warn(consts.errMssgs[e]);
+                            if (e >= 1) {
+                                res.status(501).json({ message: consts.errMssgs[e] });
+                            } else {
+                                res.status(500).json({ message: consts.errMssgs[e] });
+                            }
+                        } else {
+                            console.warn(e);
+                            res.status(500).json({ message: consts.errMssgs[0] });
+                        }
+                    })
+                })
+                .catch(e=>{
+                    if (typeof(e) === 'number') {
+                        console.warn(consts.errMssgs[e]);
+                        if (e >= 1) {
+                            res.status(501).json({ message: consts.errMssgs[e] });
+                        } else {
+                            res.status(500).json({ message: consts.errMssgs[e] });
+                        }
+                    } else {
+                        console.warn(e);
+                        res.status(500).json({ message: consts.errMssgs[0] });
+                    }
+                })
             })
             .catch(e=>{
                 if (typeof(e) === 'number') {

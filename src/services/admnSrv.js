@@ -256,6 +256,7 @@ module.exports = {
                         }
                     })
                     .catch(e=>{
+                        console.log(e)
                         console.warn('Encrypt pass request error '+e);
                         reject(e)
                     })
@@ -268,8 +269,6 @@ module.exports = {
                 console.warn('Get user request error'+e)
                 reject(e);
             })
-
-            
         })
     },
     registerUser: (newReg)=>{
