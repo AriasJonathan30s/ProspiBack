@@ -1,7 +1,7 @@
 module.exports = {
     prot: 'http',
-    url: '192.168.1.100',
-    // url: 'localhost',
+    // url: '192.168.1.100',
+    url: 'localhost',
     security: process.env.SISECURL || 3002,
     admnKey: 'AuthPersonel',
     week: ['Lunes','Martes','Miercoles','Jueves','Viernes','Sabado','Domingo'],
@@ -12,6 +12,6 @@ module.exports = {
     dbPort: '27017',
     dbName: 'prospiDb',
 
-    succsMssgs: ['Registro exitoso','Actualizacion exitosa','Registro eliminado'],
+    succsMssgs: ['Registro exitoso','Actualizacion exitosa','Registro eliminado','Orden realizada'],
     errMssgs: ['Error de sistema','Parametros incorrectos','Usuario existente','Sin registros','Contraseña incorrecta','Ya existe negocio'],
 }

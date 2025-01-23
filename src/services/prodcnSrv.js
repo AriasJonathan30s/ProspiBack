@@ -7,6 +7,69 @@ const builder = require('../helpers/builder');
 const prospiOrders = require('../models/prospiOrders');
 
 module.exports = {
+    addToOrder: (token, order, prods)=>{
+        return new Promise((resolve, reject)=>{
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje)
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 })
+                    if (hasAccess) {
+                        dao.getOrderById(order)
+                        .then(resp=>{
+                            if (resp) {
+                                let reqProds = JSON.parse(prods);
+                                reqProds.map(prod=>{
+                                    prod.totPrice = (parseFloat(prod.unitPrice) * prod.quant).toFixed(2);
+                                    return prod;
+                                })
+                                let forder = resp;
+                                if ((resp.products).length === 0) {
+                                    forder.products = reqProds;
+                                } else {
+                                    reqProds.forEach(rqProd=>{
+                                        forder.products.push(rqProd);
+                                    })
+                                }
+                                dao.updateOrderById(order, forder)
+                                .then(resp=>{
+                                    if (resp) {
+                                        resolve(3);
+                                    } else {
+                                        console.warn('Update orders by Id response error');
+                                        reject(0);
+                                    }
+                                })
+                                .catch(e=>{
+                                    console.warn('Update orders by Id request error '+e);
+                                    reject(e);
+                                })
+                            } else {
+                                console.warn('Get orders by Id response error');
+                                reject(0)    
+                            }
+                        })
+                        .catch(e=>{
+                            console.warn('Get orders by Id request error '+e);
+                            reject(e)
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    const error = await resp.json()
+                    console.warn('Decode token response error '+ error.mensaje);
+                    reject(error.mensaje);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e)
+            })
+        })
+    },
     getOrders:(token, show, opts)=>{
         return new Promise((resolve, reject)=>{
             security.decodeToken(token)
@@ -55,16 +118,32 @@ module.exports = {
                 if (resp.status === 200) {
                     const body = await resp.json();
                     const admin = JSON.parse(body.mensaje)
-                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 })
-                    if (hasAccess) {
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 })
+                    if (await hasAccess) {
                         const newOrder = JSON.parse(order);
-                        newOrder.status = 1;
                         const date = new Date();
                         newOrder.requesDateHour = date.toString();
+                        newOrder.employe = (await hasAccess)[0].name;
+                        console.log(await newOrder)
                         dao.regNewOrder(newOrder)
                         .then(resp=>{
                             if (resp) {
-                                resolve(0);
+                                const params = newOrder;
+                                const ordOpts = { _id:1 };
+                                dao.getOrder(params,ordOpts)
+                                .then(resp=>{
+                                    if (resp) {
+                                        const id = (resp._id).toString();
+                                        resolve([0, id]);
+                                    } else {
+                                        console.warn('Get Order response error');
+                                        reject(0);
+                                    }
+                                })
+                                .catch(e=>{
+                                    console.warn('Get Order request error '+ e);
+                                    reject(0);        
+                                })
                             } else {
                                 console.warn('Reg new Order response error');
                                 reject(0);
@@ -96,11 +175,11 @@ module.exports = {
             products.map(product=>{
                 let buildProd;
                 for (const prod of product.types) {
-                    buildProd = { id: product._id.toString(), name: product.name, type: prod.name, detail: builder.detailToString(prod.detail) };
+                    buildProd = { id: product._id.toString(), name: product.name, type: prod.name, detailArr: prod.detail, detail: builder.detailToString(prod.detail), price: prod.price };
                     menuProd.push(buildProd)
                 }
-            })
-            resolve(menuProd)
+            });
+            resolve(menuProd);
         })
     },
     editProduct:(token, id, product, detail, addlTypes)=>{

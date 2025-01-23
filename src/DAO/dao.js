@@ -19,6 +19,42 @@ module.exports = {
             })
         })
     },
+    updateOrderById:(id, prods)=>{
+        return new Promise((resolve, reject) => {
+            orders.findByIdAndUpdate(id, prods)
+            .then(found=>{
+                resolve(found);
+            })
+            .catch(e=>{
+                console.warn('Get order by Id Query error ' + e);
+                reject(e);
+            })
+        })
+    },
+    getOrderById: (id, opts)=>{
+        return new Promise((resolve, reject) => {
+            orders.findById(id, opts)
+            .then(found=>{
+                resolve(found);
+            })
+            .catch(e=>{
+                console.warn('Get order by Id Query error ' + e);
+                reject(e);
+            })
+        })
+    },
+    getOrder: (params, opts)=>{
+        return new Promise((resolve, reject) => {
+            orders.findOne(params, opts)
+            .then(found=>{
+                resolve(found);
+            })
+            .catch(e=>{
+                console.warn('Get order Query error ' + e);
+                reject(e);
+            })
+        })
+    },
     regNewOrder: (order)=>{
         return new Promise((resolve, reject) => {
             const newOrder = orders(order);

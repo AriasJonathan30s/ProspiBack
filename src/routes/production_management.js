@@ -4,6 +4,37 @@ const production = require('../services/prodcnSrv');
 
 const router = express.Router();
 
+router.get('/add-to-order', (req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.order && headers.prods) {
+            production.addToOrder(headers.access, headers.order, headers.prods)
+            .then(resp=>{
+                res.json({ message: consts.succsMssgs[resp] })
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
+
 router.get('/get-orders', (req,res)=>{
     const headers = req.headers;
     try {
@@ -41,7 +72,7 @@ router.get('/set-new-order', (req,res)=>{
         if (headers.access && headers.order) {
             production.newOrder(headers.access, headers.order)
             .then(resp=>{
-                res.json({ message: consts.succsMssgs[resp] })
+                res.json({ message: consts.succsMssgs[resp[0]], id: resp[1] })
             })
             .catch(e=>{
                 if (typeof(e) === 'number') {
