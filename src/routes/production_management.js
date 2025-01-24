@@ -4,6 +4,68 @@ const production = require('../services/prodcnSrv');
 
 const router = express.Router();
 
+router.get('/make-payment',(req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.order && headers.payment) {
+            production.makePayment(headers.access, headers.order, headers.payment)
+            .then(resp=>{
+                res.json({ message: consts.succsMssgs[resp] });
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
+
+router.get('/get-order', (req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.id) {
+            production.getOrder(headers.access, headers.id)
+            .then(resp=>{
+                res.json({ message: resp });
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
+
 router.get('/add-to-order', (req,res)=>{
     const headers = req.headers;
     try {

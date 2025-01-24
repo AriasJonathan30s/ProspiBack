@@ -12,6 +12,6 @@ module.exports = {
     dbPort: '27017',
     dbName: 'prospiDb',
 
-    succsMssgs: ['Registro exitoso','Actualizacion exitosa','Registro eliminado','Orden realizada'],
+    succsMssgs: ['Registro exitoso','Actualizacion exitosa','Registro eliminado','Orden realizada','Pago confirmado'],
     errMssgs: ['Error de sistema','Parametros incorrectos','Usuario existente','Sin registros','Contraseña incorrecta','Ya existe negocio'],
 }

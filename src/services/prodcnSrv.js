@@ -7,14 +7,94 @@ const builder = require('../helpers/builder');
 const prospiOrders = require('../models/prospiOrders');
 
 module.exports = {
+    makePayment: (token, order, pay)=>{
+        return new Promise((resolve, reject)=>{
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje);
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 });
+                    if (hasAccess) {
+                        const gotOrder = JSON.parse(order);
+                        const gotPay = JSON.parse(pay);
+                        gotOrder.payQuant = parseFloat(gotPay.pay);
+                        gotOrder.payMethod = gotPay.payMethod;
+                        gotOrder.change = gotPay.change;
+                        gotOrder.status = 0;
+                        const orderId = gotOrder._id;
+                        delete gotOrder._id;
+                        const orderUpd = gotOrder;
+                        dao.updateOrderById(orderId, orderUpd)
+                        .then(resp=>{
+                            resolve(4);
+                        })
+                        .catch(e=>{
+                            console.warn('Close order request error '+e);
+                            reject(e);
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    const error = await resp.json();
+                    console.warn('Decode token response error '+ error.mensaje);
+                    reject(error.mensaje);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e);
+            })
+        })
+    },
+    getOrder: (token, id)=>{
+        return new Promise((resolve, reject)=>{
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje);
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 });
+                    if (hasAccess) {
+                        dao.getOrderById(id)
+                        .then(resp=>{
+                            let price = 0;
+                            resp.products.map(product=>{
+                                price += parseFloat(product.totPrice);
+                            })
+                            resp.price = price.toFixed(2);
+                            resolve(resp);
+                        })
+                        .catch(e=>{
+                            console.warn('Find order by id request error '+e);
+                            reject(0);
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    const error = await resp.json();
+                    console.warn('Decode token response error '+ error.mensaje);
+                    reject(error.mensaje);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e);
+            })
+        })
+    },
     addToOrder: (token, order, prods)=>{
         return new Promise((resolve, reject)=>{
             security.decodeToken(token)
             .then(async resp=>{
                 if (resp.status === 200) {
                     const body = await resp.json();
-                    const admin = JSON.parse(body.mensaje)
-                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 })
+                    const admin = JSON.parse(body.mensaje);
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 });
                     if (hasAccess) {
                         dao.getOrderById(order)
                         .then(resp=>{
@@ -47,26 +127,26 @@ module.exports = {
                                 })
                             } else {
                                 console.warn('Get orders by Id response error');
-                                reject(0)    
+                                reject(0);
                             }
                         })
                         .catch(e=>{
                             console.warn('Get orders by Id request error '+e);
-                            reject(e)
+                            reject(e);
                         })
                     } else {
                         console.warn('Get users response error');
                         reject(0);
                     }
                 } else {
-                    const error = await resp.json()
+                    const error = await resp.json();
                     console.warn('Decode token response error '+ error.mensaje);
                     reject(error.mensaje);
                 }
             })
             .catch(e=>{
                 console.warn('Decode token request error '+e);
-                reject(e)
+                reject(e);
             })
         })
     },
@@ -76,8 +156,8 @@ module.exports = {
             .then(async resp=>{
                 if (resp.status === 200) {
                     const body = await resp.json();
-                    const admin = JSON.parse(body.mensaje)
-                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 })
+                    const admin = JSON.parse(body.mensaje);
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1 });
                     if (hasAccess) {
                         const showOrd = JSON.parse(show);
                         const hideOpts = JSON.parse(opts);
@@ -93,21 +173,21 @@ module.exports = {
                         })
                         .catch(e=>{
                             console.warn('Get orders request error '+e);
-                            reject(e)
+                            reject(e);
                         })
                     } else {
                         console.warn('Get users response error');
                         reject(0);
                     }
                 } else {
-                    const error = await resp.json()
+                    const error = await resp.json();
                     console.warn('Decode token response error '+ error.mensaje);
                     reject(error.mensaje);
                 }
             })
             .catch(e=>{
                 console.warn('Decode token request error '+e);
-                reject(e)
+                reject(e);
             })
         })
     },
@@ -117,14 +197,13 @@ module.exports = {
             .then(async resp=>{
                 if (resp.status === 200) {
                     const body = await resp.json();
-                    const admin = JSON.parse(body.mensaje)
-                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 })
+                    const admin = JSON.parse(body.mensaje);
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 });
                     if (await hasAccess) {
                         const newOrder = JSON.parse(order);
                         const date = new Date();
                         newOrder.requesDateHour = date.toString();
                         newOrder.employe = (await hasAccess)[0].name;
-                        console.log(await newOrder)
                         dao.regNewOrder(newOrder)
                         .then(resp=>{
                             if (resp) {
