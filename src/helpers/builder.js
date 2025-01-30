@@ -1,4 +1,35 @@
 const builder = {
+    condmntGroup: (condsArr)=>{
+        return new Promise((resolve,reject)=>{
+            const conds = [];
+            const condimentGrps = [];
+            let condimentGrp = [];
+            let grpQnt = 3;
+            condsArr.forEach(cond=>{
+                cond.conds.forEach(name=>{
+                    conds.push(name)
+                })
+            })
+            if (conds.length <= 3) {
+                condimentGrps = conds;
+            } else {
+                conds.forEach((name,index)=>{
+                    if (index < grpQnt) {
+                        condimentGrp.push(name);
+                        if (conds.length === index+1) {
+                            condimentGrps.push(condimentGrp);
+                        }
+                    } else {
+                        condimentGrps.push(condimentGrp);
+                        grpQnt += 3;
+                        condimentGrp = [];
+                        condimentGrp.push(name);
+                    }
+                })
+            }
+            resolve(condimentGrps);
+        })
+    },
     buildProd: (param,prod)=>{
         let newProd = { id: (prod._id.toString()), name: prod.name };
         prod.types.map(type=>{

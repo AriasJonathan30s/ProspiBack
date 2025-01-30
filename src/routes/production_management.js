@@ -1,8 +1,40 @@
 const express = require('express');
 const consts = require('../helpers/consts');
 const production = require('../services/prodcnSrv');
+const builder = require('../helpers/builder');
 
 const router = express.Router();
+
+router.get('/edit-order-name',(req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.id && headers.cxname) {
+            production.chngOrdName(headers.access, headers.id, headers.cxname)
+            .then(resp=>{
+                res.json({ message: consts.succsMssgs[resp] });
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
 
 router.get('/make-payment',(req,res)=>{
     const headers = req.headers;
@@ -167,7 +199,15 @@ router.get('/get-menu', (req,res)=>{
             .then(resp=>{
                 production.getMenu(resp)
                 .then(resp=>{
-                    res.json({ message: resp })
+                    const menu = resp;
+                    production.getCondiments(headers.access)
+                    .then(async resp=>{
+                        const condNames = builder.condmntGroup(resp);
+                        res.json({ message: [menu,await condNames] });
+                    })
+                    .catch(e=>{
+                        throw e;
+                    })
                 })
                 .catch(e=>{
                     throw e;

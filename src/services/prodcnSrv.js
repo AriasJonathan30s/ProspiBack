@@ -7,6 +7,40 @@ const builder = require('../helpers/builder');
 const prospiOrders = require('../models/prospiOrders');
 
 module.exports = {
+    chngOrdName: (token, id, cxName)=>{
+        return new Promise((resolve, reject)=>{
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje);
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 });
+                    if (hasAccess) {
+                        const updOpts = {cxName: cxName}
+                        dao.updateOrderById(id, updOpts)
+                        .then(resp=>{
+                            resolve(1)
+                        })
+                        .catch(e=>{
+                            console.warn('Update orderById '+e);
+                            reject(e);
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    const error = await resp.json();
+                    console.warn('Decode token response error '+ error.mensaje);
+                    reject(error.mensaje);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e);
+            })
+        })
+    },
     makePayment: (token, order, pay)=>{
         return new Promise((resolve, reject)=>{
             security.decodeToken(token)
@@ -251,14 +285,16 @@ module.exports = {
     getMenu:(products)=>{
         return new Promise((resolve, reject)=>{
             const menuProd = [];
+            const filters = [];
             products.map(product=>{
                 let buildProd;
                 for (const prod of product.types) {
                     buildProd = { id: product._id.toString(), name: product.name, type: prod.name, detailArr: prod.detail, detail: builder.detailToString(prod.detail), price: prod.price };
                     menuProd.push(buildProd)
                 }
+                filters.push(product.name);
             });
-            resolve(menuProd);
+            resolve([menuProd, filters]);
         })
     },
     editProduct:(token, id, product, detail, addlTypes)=>{
