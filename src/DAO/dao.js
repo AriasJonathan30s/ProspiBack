@@ -7,6 +7,17 @@ const products = require('../models/prospiProducts');
 const orders = require('../models/prospiOrders');
 
 module.exports = {
+    updateAllOrders:(params,opts)=>{
+        return new Promise((resolve, reject) => {
+            orders.updateMany(params,opts)
+            .then(resp=>{
+                resolve(resp)
+            })
+            .catch(e=>{
+                reject(e);
+            })    
+        })
+    },
     getOrders: (params,opts)=>{
         return new Promise((resolve, reject) => {
             orders.find(params, opts)

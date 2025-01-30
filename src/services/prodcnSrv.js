@@ -1,12 +1,66 @@
 const security = require('../fetcher/secureFetch');
 
 const productFood = require('../DTO/productFoodDTO');
+const queries = require('../DTO/consultasAdmin');
 
 const dao = require('../DAO/dao');
 const builder = require('../helpers/builder');
 const prospiOrders = require('../models/prospiOrders');
 
 module.exports = {
+    chngTp:()=>{
+        return new Promise((resolve, reject)=>{
+            dao.updateAllOrders({},{$convert:{input:"requesDateHour",to:"date"}})
+            .then(resp=>{
+                console.log('Actualizados')
+            })
+            .catch(e=>{
+                reject('falla')
+            })
+        })
+    },
+    getSales:(token, ranges)=>{
+        return new Promise((resolve, reject)=>{
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje);
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 });
+                    if (hasAccess) {
+                        const parsedRanges = JSON.parse(ranges);
+                        const queryFiltered = new queries();
+                        const filterPrice = 0;
+                        queryFiltered.setStartDate(builder.dateGetter(parsedRanges.start));
+                        queryFiltered.setEndDate(builder.dateGetter(parsedRanges.end));
+                        queryFiltered.setprice(filterPrice);
+                        queryFiltered.setStatus(1)
+                        dao.getOrders(queryFiltered.getRangeFilterNotInc())
+                        .then(resp=>{
+                            console.log(resp)
+                        })
+                        .catch(e=>{
+                            console.warn('GetOrders request error '+e)
+                            reject(e)
+                        })
+                        //Buscar un query sea aggregation, para encontrar rangos de fechas en mongo.
+                        resolve(queryFiltered.getRangeFilterNotInc())
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    const error = await resp.json();
+                    console.warn('Decode token response error '+ error.mensaje);
+                    reject(error.mensaje);
+                }
+            })
+            .catch(e=>{
+                console.warn('Decode token request error '+e);
+                reject(e);
+            })
+        })
+    },
     chngOrdName: (token, id, cxName)=>{
         return new Promise((resolve, reject)=>{
             security.decodeToken(token)
