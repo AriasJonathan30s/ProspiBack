@@ -1,23 +1,46 @@
 const security = require('../fetcher/secureFetch');
 
-const productFood = require('../DTO/productFoodDTO');
-const queries = require('../DTO/consultasAdmin');
+const productFoodDTO = require('../DTO/productFoodDTO');
+const queriesDTO = require('../DTO/consultasAdminDTO');
+const orderDTO = require('../DTO/ordersDTO');
 
 const dao = require('../DAO/dao');
 const builder = require('../helpers/builder');
-const prospiOrders = require('../models/prospiOrders');
 
 module.exports = {
-    chngTp:()=>{
+    cnclOrd:(token, id)=>{
         return new Promise((resolve, reject)=>{
-            dao.updateAllOrders({},{$convert:{input:"requesDateHour",to:"date"}})
-            .then(resp=>{
-                console.log('Actualizados')
+            security.decodeToken(token)
+            .then(async resp=>{
+                if (resp.status === 200) {
+                    const body = await resp.json();
+                    const admin = JSON.parse(body.mensaje);
+                    const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 });
+                    if (hasAccess) {
+                        const cnclReqOpts = new orderDTO();
+                        dao.updateOrderById(id, cnclReqOpts.getCnclOrd())
+                        .then(resp=>{
+                            resolve(5);
+                        })
+                        .catch(e=>{
+                            console.warn('Update Order request error '+e);
+                            reject(e);
+                        })
+                    } else {
+                        console.warn('Get users response error');
+                        reject(0);
+                    }
+                } else {
+                    const error = await resp.json();
+                    console.warn('Decode token response error '+ error.mensaje);
+                    reject(error.mensaje);
+                }
             })
             .catch(e=>{
-                reject('falla')
+                console.warn('Decode token request error '+e);
+                reject(e);
             })
-        })
+        })   
     },
     getSales:(token, ranges)=>{
         return new Promise((resolve, reject)=>{
@@ -29,22 +52,31 @@ module.exports = {
                     const hasAccess = dao.getUsers({ user: admin.user}, { _id: 1, name: 1 });
                     if (hasAccess) {
                         const parsedRanges = JSON.parse(ranges);
-                        const queryFiltered = new queries();
+                        const queryFiltered = new queriesDTO();
                         const filterPrice = 0;
                         queryFiltered.setStartDate(builder.dateGetter(parsedRanges.start));
                         queryFiltered.setEndDate(builder.dateGetter(parsedRanges.end));
                         queryFiltered.setprice(filterPrice);
                         queryFiltered.setStatus(1)
-                        dao.getOrders(queryFiltered.getRangeFilterNotInc())
+                        dao.getOrders(queryFiltered.getRangeFilterNotInc(),{ _id:0, __v:0 })
                         .then(resp=>{
-                            console.log(resp)
+                            const prods = resp;
+                            const prodsCons = builder.constructProds(prods)
+                            const rngRsm = builder.rangeResm(prods);
+                            dao.countOrders(queryFiltered.getRngCancOrd(),{})
+                            .then(resp=>{
+                                rngRsm.cnclOrd = resp;
+                                resolve([rngRsm,prodsCons]);
+                            })
+                            .catch(e=>{
+                                console.warn('Count orders request error '+e)    
+                                reject(e)
+                            })
                         })
                         .catch(e=>{
                             console.warn('GetOrders request error '+e)
                             reject(e)
                         })
-                        //Buscar un query sea aggregation, para encontrar rangos de fechas en mongo.
-                        resolve(queryFiltered.getRangeFilterNotInc())
                     } else {
                         console.warn('Get users response error');
                         reject(0);
@@ -249,12 +281,49 @@ module.exports = {
                     if (hasAccess) {
                         const showOrd = JSON.parse(show);
                         const hideOpts = JSON.parse(opts);
-                        dao.getOrders(showOrd,hideOpts)
+                        let requestType;
+                        if(typeof(showOrd.status)==='undefined' && typeof(showOrd.payMethod)==='undefined'){
+                            console.log('todos')
+                            requestType = 0;
+                        }
+                        if(showOrd.status === 0 && typeof(showOrd.payMethod)==='undefined'){
+                            console.log('Cerrados')
+                            requestType = 1;
+                        }
+                        if(showOrd.status === 0 && showOrd.payMethod==='Cancelado'){
+                            console.log('Cancelado')
+                            requestType = 2;
+                        }
+                        if(showOrd.status === 1){
+                            console.log('activos')
+                            requestType = 3;
+                        }
+                        let orderQuery;
+                        const newQuery = new queriesDTO();
+                        newQuery.setEndDate(new Date());
+                        newQuery.setStartDate(new Date(`${newQuery.getEndDate().getFullYear()}-${newQuery.getEndDate().getMonth()+1}-${newQuery.getEndDate().getDate()} 00:00:00`));
+                        switch (requestType) {
+                            case 0:
+                                orderQuery = newQuery.getRange();
+                                break;
+                            case 1:
+                                orderQuery = newQuery.getRngClsOrd();
+                                break;
+                            case 2:
+                                newQuery.setPayMethod(showOrd.payMethod);
+                                orderQuery = newQuery.getRngCancOrd();
+                                break;
+                            case 3:
+                                orderQuery = showOrd;
+                                break;
+                        }
+                        console.log(hideOpts)
+                        dao.getOrders(orderQuery,hideOpts)
                         .then(resp=>{
                             const orders = [];
                             resp.map(order=>{
                                 const requesDateHour = new Date(order.requesDateHour);
-                                const newOrder = { id: order._id, cxName: order.cxName, prodQuant: order.products.length, status: 1, requesDateHour: requesDateHour.toLocaleString() };
+                                const newOrder = { id: order._id, cxName: order.cxName, prodQuant: order.products.length, status: order.status, requesDateHour: requesDateHour.toLocaleString(), payMethod: order.payMethod };
                                 orders.push(newOrder);
                             })
                             resolve(orders);
@@ -362,7 +431,7 @@ module.exports = {
                     if (hasAccess) {
                         dao.findProdByID(id)
                         .then( async gotProd=>{
-                            const dbProd = new productFood();
+                            const dbProd = new productFoodDTO();
                             dbProd.setProduct(await gotProd);
                             const reqProd = JSON.parse(product);
                             if (reqProd.name) {

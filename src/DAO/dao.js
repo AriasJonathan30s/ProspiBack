@@ -7,15 +7,16 @@ const products = require('../models/prospiProducts');
 const orders = require('../models/prospiOrders');
 
 module.exports = {
-    updateAllOrders:(params,opts)=>{
+    countOrders: (params,opts)=>{
         return new Promise((resolve, reject) => {
-            orders.updateMany(params,opts)
-            .then(resp=>{
-                resolve(resp)
+            orders.countDocuments(params, opts).select({ "status": { '$cond': { if: { '$eq': [ "$status", 0] }, then: 'cerrado', else: "$status" } } } )
+            .then(found=>{
+                resolve(found);
             })
             .catch(e=>{
+                console.warn('Get orders Query error ' + e);
                 reject(e);
-            })    
+            })
         })
     },
     getOrders: (params,opts)=>{
@@ -30,9 +31,9 @@ module.exports = {
             })
         })
     },
-    updateOrderById:(id, prods)=>{
+    updateOrderById:(id, opts)=>{
         return new Promise((resolve, reject) => {
-            orders.findByIdAndUpdate(id, prods)
+            orders.findByIdAndUpdate(id, opts)
             .then(found=>{
                 resolve(found);
             })

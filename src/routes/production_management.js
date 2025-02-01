@@ -5,14 +5,35 @@ const builder = require('../helpers/builder');
 
 const router = express.Router();
 
-router.get('/change-date-type',(req,res)=>{
-    production.chngTp()
-    .then(resp=>{
-        res.json({confirmation:'Confirmado'})
-    })
-    .catch(e=>{
-        res.status(200).json({error:'error'})
-    })
+router.get('/cancel-order',(req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.id) {
+            production.cnclOrd(headers.access, headers.id)
+            .then(resp=>{
+                res.json({ message: consts.succsMssgs[resp] });
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
 })
 
 router.get('/get-sales-range',(req,res)=>{
@@ -21,8 +42,7 @@ router.get('/get-sales-range',(req,res)=>{
         if (headers.access && headers.ranges) {
             production.getSales(headers.access, headers.ranges)
             .then(resp=>{
-                console.log(resp)
-                res.json({ message: 'Construyendo' });
+                res.json({ message: resp });
             })
             .catch(e=>{
                 if (typeof(e) === 'number') {

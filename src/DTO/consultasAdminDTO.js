@@ -4,12 +4,15 @@ class businessDTO {
         start,
         end,
         price,
-        status
+        status,
+        payMethod
+
     ) {
         this.start = start;
         this.end = end;
         this.price = price;
         this.status = status;
+        this.payMethod = payMethod;
     }
 
     getStartDate(){
@@ -56,6 +59,17 @@ class businessDTO {
         }
     }
 
+    getPayMethod(){
+        return this._payMethod;
+    }
+    setPayMethod(newPayMethod){
+        if (newPayMethod === '') {
+            throw 'Campo vacio'
+        } else {
+            this._payMethod = newPayMethod;
+        }
+    }
+
     getRange(){
         return {
             requesDateHour: {
@@ -73,6 +87,26 @@ class businessDTO {
             },
             price: { "$ne": this._price },
             status: { "$ne": this._status }
+        }
+    }
+
+    getRngClsOrd(){
+        return {
+            requesDateHour: {
+                "$gt": this._start,
+                "$lt": this._end
+            },
+            price: { "$gt": 0 },
+        }
+    }
+
+    getRngCancOrd(){
+        return {
+            requesDateHour: {
+                "$gt": this._start,
+                "$lt": this._end
+            },
+            payMethod: this._payMethod
         }
     }
 }
