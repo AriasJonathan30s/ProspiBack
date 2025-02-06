@@ -283,19 +283,19 @@ module.exports = {
                         const hideOpts = JSON.parse(opts);
                         let requestType;
                         if(typeof(showOrd.status)==='undefined' && typeof(showOrd.payMethod)==='undefined'){
-                            console.log('todos')
+                            // console.log('todos')
                             requestType = 0;
                         }
                         if(showOrd.status === 0 && typeof(showOrd.payMethod)==='undefined'){
-                            console.log('Cerrados')
+                            // console.log('Cerrados')
                             requestType = 1;
                         }
                         if(showOrd.status === 0 && showOrd.payMethod==='Cancelado'){
-                            console.log('Cancelado')
+                            // console.log('Cancelado')
                             requestType = 2;
                         }
                         if(showOrd.status === 1){
-                            console.log('activos')
+                            // console.log('activos')
                             requestType = 3;
                         }
                         let orderQuery;
@@ -317,7 +317,6 @@ module.exports = {
                                 orderQuery = showOrd;
                                 break;
                         }
-                        console.log(hideOpts)
                         dao.getOrders(orderQuery,hideOpts)
                         .then(resp=>{
                             const orders = [];
