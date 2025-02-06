@@ -163,7 +163,6 @@ router.get('/edit-user',(req,res)=>{
 router.get('/load-users',(req,res)=>{
     const headers = req.headers;
     try {
-        //Requerira validacion headers token admin mas adelante.
         admnServ.getUsers()
         .then(resp=>{
             res.setHeader('Access-Control-Allow-Origin','*').json({ message: resp });

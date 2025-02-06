@@ -5,6 +5,68 @@ const builder = require('../helpers/builder');
 
 const router = express.Router();
 
+router.get('/cancel-order',(req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.id) {
+            production.cnclOrd(headers.access, headers.id)
+            .then(resp=>{
+                res.json({ message: consts.succsMssgs[resp] });
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
+
+router.get('/get-sales-range',(req,res)=>{
+    const headers = req.headers;
+    try {
+        if (headers.access && headers.ranges) {
+            production.getSales(headers.access, headers.ranges)
+            .then(resp=>{
+                res.json({ message: resp });
+            })
+            .catch(e=>{
+                if (typeof(e) === 'number') {
+                    console.warn(consts.errMssgs[e]);
+                    if (e >= 1) {
+                        res.status(501).json({ message: consts.errMssgs[e] });
+                    } else {
+                        res.status(500).json({ message: consts.errMssgs[e] });
+                    }
+                } else {
+                    console.warn(e);
+                    res.status(500).json({ message: consts.errMssgs[0] });
+                }
+            })
+        } else {
+            console.warn('Parametro erroneo');
+            res.status(500).json({ message: consts.errMssgs[1] });
+        }
+    } catch (e) {
+        console.warn(e);
+        res.status(500).json({ message: consts.errMssgs[0] });
+    }
+})
+
 router.get('/edit-order-name',(req,res)=>{
     const headers = req.headers;
     try {

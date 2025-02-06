@@ -1,34 +1,75 @@
+const { Promise } = require("mongoose");
+
 const builder = {
-    condmntGroup: (condsArr)=>{
-        return new Promise((resolve,reject)=>{
-            const conds = [];
-            const condimentGrps = [];
-            let condimentGrp = [];
-            let grpQnt = 3;
-            condsArr.forEach(cond=>{
-                cond.conds.forEach(name=>{
-                    conds.push(name)
-                })
-            })
-            if (conds.length <= 3) {
-                condimentGrps = conds;
-            } else {
-                conds.forEach((name,index)=>{
-                    if (index < grpQnt) {
-                        condimentGrp.push(name);
-                        if (conds.length === index+1) {
-                            condimentGrps.push(condimentGrp);
-                        }
-                    } else {
-                        condimentGrps.push(condimentGrp);
-                        grpQnt += 3;
-                        condimentGrp = [];
-                        condimentGrp.push(name);
-                    }
-                })
+    constructProds: (orders)=>{
+        const newOrders = [];
+        orders.forEach(vals=>{
+            const newVals = {
+                cxName: vals.cxName, employe: vals.employe, payMethod: vals.payMethod, change: vals.change,
+                payQuant: vals.payQuant, price: vals.price, products: vals.products
+            };
+            if (vals.price === 0 && vals.status === 0) {
+                newVals.status = 'Cancelado'
             }
-            resolve(condimentGrps);
+            if (vals.price !== 0 && vals.status === 0) {
+                newVals.status = 'Cerrado'
+            }
+            if (vals.price !== 0 && vals.status !== 0) {
+                newVals.status = 'Abierto'
+            }
+            let prodQuant=0;
+            vals.products.forEach(prod=>{
+                prodQuant += prod.quant;
+            })
+            newVals.quant = prodQuant;
+            newOrders.push(newVals);
         })
+        return newOrders
+    },
+    rangeResm: (orders)=>{
+        let totIncm = 0;
+        let totProds = 0;
+        const rngRsm = {totOrders: orders.length, totIncm: totIncm, prdsSold: totProds};
+        orders.forEach(ord=>{
+            totIncm += ord.price;
+            let prodsCnt = 0;
+            ord.products.forEach(prod=>{
+                prodsCnt += prod.quant
+            })
+            totProds += prodsCnt;
+        })
+        rngRsm.totIncm = totIncm;
+        rngRsm.prdsSold = totProds;
+        return rngRsm
+    },
+    condmntGroup: (condsArr)=>{
+        const conds = [];
+        const condimentGrps = [];
+        let condimentGrp = [];
+        let grpQnt = 3;
+        condsArr.forEach(cond=>{
+            cond.conds.forEach(name=>{
+                conds.push(name)
+            })
+        })
+        if (conds.length <= 3) {
+            condimentGrps = conds;
+        } else {
+            conds.forEach((name,index)=>{
+                if (index < grpQnt) {
+                    condimentGrp.push(name);
+                    if (conds.length === index+1) {
+                        condimentGrps.push(condimentGrp);
+                    }
+                } else {
+                    condimentGrps.push(condimentGrp);
+                    grpQnt += 3;
+                    condimentGrp = [];
+                    condimentGrp.push(name);
+                }
+            })
+        }
+        return condimentGrps;
     },
     buildProd: (param,prod)=>{
         let newProd = { id: (prod._id.toString()), name: prod.name };

@@ -219,7 +219,7 @@ module.exports = {
     login: (usr)=>{
         return new Promise((resolve, reject) => {
             const usrLog = JSON.parse(usr);
-            const usrParam = { user: usrLog.user };
+            const usrParam = { user: (usrLog.user).toLowerCase() };
             const usrOpt = { user:1, pass:1, role:1, area:1, _id:0 };
             dao.getUser(usrParam, usrOpt)
             .then(resp=>{
@@ -278,7 +278,7 @@ module.exports = {
                 if (resp.status === 200) {
                     const body = await resp.json()
                     newReg.pass = body.mensaje
-                    const usrParams = { user: newReg.user };
+                    const usrParams = { user: (newReg.user).toLowerCase() };
                     const usrOpt = { user: 1 };
                     dao.getUser(usrParams, usrOpt)
                     .then(resp=>{

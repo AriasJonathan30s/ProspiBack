@@ -4,7 +4,7 @@ const ProspiOrders = mongoose.Schema(
     {
         cxName: { type: String, require: true },
         products: { type: Array, require: false },
-        requesDateHour: { type: String, require: true },
+        requesDateHour: { type: Date, require: true },
         price: { type: Number, require: false },
         payQuant: { type: Number, require: false },
         payMethod: { type: String, require: false }, 
