@@ -163,6 +163,7 @@ router.get('/get-order', (req,res)=>{
 router.get('/add-to-order', (req,res)=>{
     const headers = req.headers;
     try {
+        // console.log(headers)
         if (headers.access && headers.order && headers.prods) {
             production.addToOrder(headers.access, headers.order, headers.prods)
             .then(resp=>{
