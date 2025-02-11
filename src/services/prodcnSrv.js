@@ -221,7 +221,7 @@ module.exports = {
                             if (resp) {
                                 let reqProds = JSON.parse(prods);
                                 reqProds.map(prod=>{
-                                    prod.totPrice = (parseFloat(prod.unitPrice) * prod.quant).toFixed(2);
+                                    prod.totPrice = ((parseFloat(prod.unitPrice) + parseFloat(prod.extraCost)) * prod.quant).toFixed(2);
                                     return prod;
                                 })
                                 let forder = resp;
